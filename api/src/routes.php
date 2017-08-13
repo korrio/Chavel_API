@@ -20,7 +20,8 @@ $app->group('/v1', function () use ($app) {
 	    			'status' 	=> '200',
 	    			'source'	=> '/user/search/'.$args['query'],
 	    			'title'		=> 'Success',
-	    			'detail'	=> 'Success'
+	    			'detail'	=> 'Success',
+	    			//'sql' => $sth->toSql()
 	    		);
 	    // not found
 	    if(count($result["list"]) == 0 ){
@@ -380,7 +381,7 @@ $app->group('/v1', function () use ($app) {
     	$sth = $this->db->prepare($sql_select);
     	$sth->bindParam("route_id", $input['route_id']);
     	$sth->execute();
-	    $result = $sth->fetchAll();
+	    $result = $sth->fetchAll(PDO::FETCH_ASSOC);
 	    if(count($result)>0){
 		    $sql = "UPDATE cha_route SET route_detail=:route_detail,route_like=:route_like,route_title=:route_title,route_activity=:route_activity,route_city=:route_city,route_travel_method=:route_travel_method,route_budgetmin=:route_budgetmin,route_budgetmax=:route_budgetmax,route_suggestion=:route_suggestion,route_latitude=:route_latitude,route_longitude=:route_longitude WHERE route_id=:route_id";
 		    $sth = $this->db->prepare($sql);
@@ -415,7 +416,8 @@ $app->group('/v1', function () use ($app) {
 	    			'status' 	=> '207',
 	    			'source'	=> '/updateRoute',
 	    			'title'		=> 'Not found route',
-	    			'detail'	=> 'Please re-check route id'
+	    			'detail'	=> 'Please re-check route id',
+	    			'$result' => $result
 	    		)
 	    	);
 		}
@@ -1553,14 +1555,14 @@ $app->group('/v1', function () use ($app) {
 		    $sth = $this->db->prepare("DELETE FROM cha_image_route WHERE route_id=:route_id");
 		    $sth->bindParam("route_id", $input['route_id']);
 		    $sth->execute();
-		    $result['errors'] = array(
+		    $res['errors'] = array(
 				'status' 	=> '200',
 				'source'	=> '/delRoute',
 				'title'		=> 'Success',
 				'detail'	=> 'route_id: '.$input['route_id']
 			);
 		}else{
-			$result = array(
+			$res = array(
 	    		'errors' => array(
 	    			'status' 	=> '207',
 	    			'source'	=> '/delRoute',
@@ -1569,7 +1571,7 @@ $app->group('/v1', function () use ($app) {
 	    		)
 	    	);
 		}
-	    return $this->response->withJson($result);
+	    return $this->response->withJson($res);
 	});
 	$app->post('/addPlace', function ($request, $response) {
 		$result = "";
@@ -1667,14 +1669,15 @@ $app->group('/v1', function () use ($app) {
 		    $sth = $this->db->prepare("DELETE FROM cha_place WHERE place_id=:place_id");
 		    $sth->bindParam("place_id", $input['place_id']);
 		    $sth->execute();
-		    $result['errors'] = array(
+		    $res['errors'] = array(
 				'status' 	=> '200',
 				'source'	=> '/delPlace',
 				'title'		=> 'Success',
-				'detail'	=> 'place_id: '.$input['place_id']
+				'detail'	=> 'place_id: '.$input['place_id'],
+				'place_deleted' => $result
 			);
 		}else{
-			$result = array(
+			$res = array(
 	    		'errors' => array(
 	    			'status' 	=> '207',
 	    			'source'	=> '/delPlace',
@@ -1683,7 +1686,7 @@ $app->group('/v1', function () use ($app) {
 	    		)
 	    	);
 		}
-	    return $this->response->withJson($result);
+	    return $this->response->withJson($res);
 	});
 	$app->post('/addTakePlace', function ($request, $response) {
 		$result = "";
@@ -1731,7 +1734,7 @@ $app->group('/v1', function () use ($app) {
 	    $input = $request->getParsedBody();
 	    $where = "";
 	    if(!empty($input['user_id'])){
-	    	$sql_select = "SELECT * FROM place_take_route_id WHERE user_id=:user_id";
+	    	$sql_select = "SELECT * FROM cha_take_route WHERE user_id=:user_id";
 	    	$sth = $this->db->prepare($sql_select);
 	    	$sth->bindParam("user_id", $input['user_id']);
 	    }
@@ -1739,15 +1742,15 @@ $app->group('/v1', function () use ($app) {
 	    $sth->execute();
 	    $result = $sth->fetchAll();
 	    if(count($result)>0){
-		    $result['errors'] = array(
+		    $res['errors'] = array(
     			'status' 	=> '200',
     			'source'	=> '/listTakePlaceUser',
     			'title'		=> 'Success',
-    			'detail'	=> json_encode($result),
+    			'detail'	=> $result,
     			'dateType'	=> 'json'
     		);
 	    }else{
-	    	$result = array(
+	    	$res = array(
 	    		'errors' => array(
 	    			'status' 	=> '207',
 	    			'source'	=> '/listTakePlaceUser',
@@ -1763,7 +1766,7 @@ $app->group('/v1', function () use ($app) {
 	    $input = $request->getParsedBody();
 	    $where = "";
 	    if(!empty($input['route_id'])){
-	    	$sql_select = "SELECT * FROM place_take_route_id WHERE route_id=:route_id";
+	    	$sql_select = "SELECT * FROM cha_take_route WHERE route_id=:route_id";
 	    	$sth = $this->db->prepare($sql_select);
 	    	$sth->bindParam("route_id", $input['route_id']);
 	    }
@@ -1771,15 +1774,15 @@ $app->group('/v1', function () use ($app) {
 	    $sth->execute();
 	    $result = $sth->fetchAll();
 	    if(count($result)>0){
-		    $result['errors'] = array(
+		    $res['errors'] = array(
     			'status' 	=> '200',
     			'source'	=> '/listTakePlaceRoute',
     			'title'		=> 'Success',
-    			'detail'	=> json_encode($result),
+    			'detail'	=> $result,
     			'dateType'	=> 'json'
     		);
 	    }else{
-	    	$result = array(
+	    	$res = array(
 	    		'errors' => array(
 	    			'status' 	=> '207',
 	    			'source'	=> '/listTakePlaceRoute',
@@ -1788,7 +1791,7 @@ $app->group('/v1', function () use ($app) {
 	    		)
 	    	);
 	    }
-	    return $this->response->withJson($result);
+	    return $this->response->withJson($res);
 	});
 	$app->post('/addFriend', function ($request, $response) {
 		$result = "";
@@ -1804,7 +1807,7 @@ $app->group('/v1', function () use ($app) {
 	    $sth->execute();
 	    $result = $sth->fetchAll();
 	    if(count($result)>0){
-	    	$sql = "INSERT INTO friend (user_id,user_friend_id,friend_create) VALUES (:user_id,:user_friend_id,:friend_create)";
+	    	$sql = "INSERT INTO cha_friend (user_id,user_friend_id,friend_create) VALUES (:user_id,:user_friend_id,:friend_create)";
 		    $sth = $this->db->prepare($sql);
 		    $sth->bindParam("user_id", 	$input['user_id']);
 		    $sth->bindParam("user_friend_id", 	$input['user_friend_id']);
@@ -1830,7 +1833,7 @@ $app->group('/v1', function () use ($app) {
 	    }
 	    return $this->response->withJson($result);
 	});
-	$app->delete('/unFriends/[{user_id}]', function ($request, $response, $args) {
+	$app->post('/unFriends/[{user_id}]', function ($request, $response, $args) {
 		$input = $request->getParsedBody();
 
 	    if(!empty($input['user_id'])){
@@ -1843,10 +1846,10 @@ $app->group('/v1', function () use ($app) {
 	    $result = $sth->fetchAll();
 	    if(count($result)>0){
 		    $sth = $this->db->prepare("DELETE FROM cha_friend WHERE user_id=:user_id and user_friend_id=:user_friend_id");
-		    $sth->bindParam("user_id", $args['user_id']);
-		    $sth->bindParam("user_friend_id", $args['user_friend_id']);
+		    $sth->bindParam("user_id", $input['user_id']);
+		    $sth->bindParam("user_friend_id", $input['user_friend_id']);
 		    $sth->execute();
-		    $result = $sth->fetchAll();
+		    //$result = $sth->fetchAll();
 		    $result['errors'] = array(
 				'status' 	=> '200',
 				'source'	=> '/unFriends',
@@ -2469,14 +2472,15 @@ $app->group('/v1', function () use ($app) {
 		    $sth->bindParam("user_id", 	$input['user_id']);
 		    $sth->execute();
 	    	$result = $sth->fetchAll();
-		    $result['errors'] = array(
+	    	$res['list'] = $result;
+		    $res['errors'] = array(
     			'status' 	=> '200',
-    			'source'	=> '/unFollowUser',
+    			'source'	=> '/listFollowUser',
     			'title'		=> 'Success',
     			'data'		=> $result
     		);
 	    }else{
-	    	$result = array(
+	    	$res = array(
 	    		'errors' => array(
 	    			'status' 	=> '207',
 	    			'source'	=> '/unFollowUser',
@@ -2485,7 +2489,7 @@ $app->group('/v1', function () use ($app) {
 	    		)
 	    	);
 	    }
-	    return $this->response->withJson($result);
+	    return $this->response->withJson($res);
 	});
 	$app->post('/listCommentRoute', function ($request, $response) {
 		$result = array();
