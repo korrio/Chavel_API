@@ -310,6 +310,10 @@ class Response extends Message implements ResponseInterface
         $body->rewind();
         $body->write($json = json_encode($data, $encodingOptions));
 
+        array_walk_recursive($data, function (&$item, $key) {
+            $item = null === $item ? '' : $item;
+        });
+
         // Ensure that the json encoding passed successfully
         if ($json === false) {
             throw new \RuntimeException(json_last_error_msg(), json_last_error());

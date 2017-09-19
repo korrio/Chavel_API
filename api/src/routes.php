@@ -874,10 +874,7 @@ $app->group('/v1', function () use ($app) {
 	    	$where = " and (a.route_title LIKE :search OR a.route_detail LIKE :search)";
 	    }
 	    $sql_select = "SELECT a.*,TIMESTAMPDIFF(MINUTE, a.route_create, now()) as diffDate,b.user_name,img.img_text FROM 
-	    cha_route a 
-	    inner join cha_users b on a.user_id=b.user_id 
-	    left join cha_image_route img on a.route_id=img.route_id 
-	    WHERE a.route_publish=1 ".$where." order by a.route_view desc limit 0,12";
+	    cha_route a inner join cha_users b on a.user_id=b.user_id left join cha_image_route img on a.route_id=img.route_id WHERE a.route_publish=1 ".$where." order by a.route_view desc limit 0,12";
     	$sth = $this->db->prepare($sql_select);
     	if(!empty($input["searchtext"])){
     		$searchtext = "%".$input['searchtext']."%";
@@ -1123,7 +1120,31 @@ $app->group('/v1', function () use ($app) {
 	$app->post('/listRoutesFeedHome', function ($request, $response) {
 	    $input = $request->getParsedBody();
 
-	    $sql_select = "SELECT a.*,TIMESTAMPDIFF(MINUTE, a.route_create, now()) as diffDate,b.user_name,b.user_image,img.img_text,IFNULL((SELECT like_status FROM cha_log_like WHERE route_id=a.route_id and user_id = :user_id Order by create_like desc limit 0,1),0) as like_status,IFNULL((SELECT favorite_status FROM cha_log_favorite WHERE route_id=a.route_id and user_id = :user_id Order by create_favorite desc limit 0,1),0) as favorite_status FROM cha_route a inner join cha_users b on a.user_id=b.user_id left join cha_image_route img on a.route_id=img.route_id WHERE a.route_publish=1 and (a.user_id IN (select follow_user_id from cha_follow where user_id = :user_id) OR a.user_id = :user_id) order by a.route_id desc";
+	    $sql_select = "SELECT 
+	    a.*,TIMESTAMPDIFF(MINUTE, a.route_create, now()) as diffDate,
+	    b.user_name,
+	    b.user_image,
+	    img.img_text,
+	    IFNULL((SELECT like_status 
+	    	FROM cha_log_like 
+	    	WHERE route_id=a.route_id 
+	    	and user_id = :user_id 
+	    	Order by create_like desc limit 0,1),0) as like_status,
+	    IFNULL((SELECT favorite_status 
+	    	FROM cha_log_favorite 
+	    	WHERE route_id=a.route_id 
+	    	and user_id = :user_id 
+	    	Order by create_favorite desc limit 0,1),0) as favorite_status 
+	    FROM cha_route a 
+	    inner join cha_users b on a.user_id=b.user_id 
+	    left join cha_image_route img 
+	    	on a.route_id=img.route_id 
+	    WHERE a.route_publish=1 
+	    and (a.user_id IN (
+	    		select follow_user_id 
+	    		from cha_follow 
+	    		where user_id = :user_id) OR a.user_id = :user_id) 
+	    order by a.route_id desc";
     	$sth = $this->db->prepare($sql_select);
     	$sth->bindParam("user_id", $input['user_id']);
     	$sth->execute();
@@ -1149,6 +1170,8 @@ $app->group('/v1', function () use ($app) {
 	    			$tmpImage[]=array(
 	    				'img_text'=> $data["img_text"]
 	    			);
+	    		} else {
+	    			$tmpImage[]=array('img_text' => 'placeholder');
 	    		}
 	    		$tmpLastData = array(
 		    					'user_id'=>$data["user_id"],
@@ -1211,6 +1234,8 @@ $app->group('/v1', function () use ($app) {
 	    			$tmpImage[]=array(
 	    				'img_text'=> $data["img_text"]
 	    			);
+	    		} else {
+	    			$tmpImage[]=array('img_text' => 'placeholder');
 	    		}
 	    		$tmpLastData = array(
 		    					'user_id'=>$data["user_id"],
@@ -1254,6 +1279,10 @@ $app->group('/v1', function () use ($app) {
 	    		}
 	    	}
     	}
+
+//     	array_walk_recursive($result['list'], function (&$item, $key) {
+//     $item = null === $item ? '' : $item;
+// });
     	
 
 	    $result['errors'] = array(
